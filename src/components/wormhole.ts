@@ -12,12 +12,15 @@ const transports: Transports = {}
 const targets: VMRegister = {}
 const sources: VMRegister = {}
 
+export type WormholeCallback = () => void
+
 export const Wormhole = Vue.extend({
   data: () => ({
     transports,
     targets,
     sources,
     trackInstances: inBrowser,
+    changeCallbacks: [] as Array<WormholeCallback>,
   }),
   methods: {
     open(transport: TransportInput) {
@@ -50,6 +53,8 @@ export const Wormhole = Vue.extend({
         newTransports,
         (a: Transport, b: Transport) => a.order - b.order
       )
+
+      this.$_processChange()
     },
 
     close(transport: TransportVector, force = false) {
@@ -70,6 +75,8 @@ export const Wormhole = Vue.extend({
           this.transports[to] = newTransports
         }
       }
+
+      this.$_processChange()
     },
     registerTarget(target: string, vm: Vue, force?: boolean): void {
       if (!inBrowser) return
@@ -77,19 +84,23 @@ export const Wormhole = Vue.extend({
         console.warn(`[portal-vue]: Target ${target} already exists`)
       }
       this.$set(this.targets, target, Object.freeze([vm]))
+      this.$_processChange()
     },
     unregisterTarget(target: string) {
       this.$delete(this.targets, target)
+      this.$_processChange()
     },
     registerSource(source: string, vm: Vue, force?: boolean): void {
       if (!inBrowser) return
       if (this.trackInstances && !force && this.sources[source]) {
-        console.warn(`[portal-vue]: source ${source} already exists`)
+        console.warn(`[portal-vue]: Source ${source} already exists`)
       }
       this.$set(this.sources, source, Object.freeze([vm]))
+      this.$_processChange()
     },
     unregisterSource(source: string) {
       this.$delete(this.sources, source)
+      this.$_processChange()
     },
     hasTarget(to: string) {
       return !!(this.targets[to] && this.targets[to][0])
@@ -100,7 +111,23 @@ export const Wormhole = Vue.extend({
     hasContentFor(to: string) {
       return !!this.transports[to] && !!this.transports[to].length
     },
+    addOnChangeListener(callback: WormholeCallback) {
+      this.changeCallbacks.push(callback)
+    },
+    removeOnChangeListener(callback?: WormholeCallback) {
+      this.changeCallbacks = this.changeCallbacks.filter(
+        (c: WormholeCallback) => c !== callback
+      )
+    },
+    removeOnChangeListeners() {
+      this.changeCallbacks = [];
+    },
     // Internal
+    $_processChange() {
+      this.changeCallbacks.forEach(callback => {
+        callback()
+      });
+    },
     $_getTransportIndex({ to, from }: TransportVector): number {
       for (const i in this.transports[to]) {
         if (this.transports[to][i].from === from) {
