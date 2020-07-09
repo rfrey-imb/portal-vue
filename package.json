@@ -13,10 +13,10 @@
     "docs:build": "vuepress build docs",
     "serve": "vue-cli-service serve example/main.ts",
     "serve:prod": "vue-cli-service serve --mode production example/main.ts",
-    "roll": "ROLL=1 node ./scripts/build && yarn minify",
+    "roll": "ROLL=1 node ./scripts/build && npm run minify",
     "minify": "minify dist/portal-vue.umd.js --out-file dist/portal-vue.umd.min.js",
     "lint": "vue-cli-service lint",
-    "test": "yarn test:unit",
+    "test": "npm run test:unit",
     "test:unit": "vue-cli-service test:unit"
   },
   "main": "dist/portal-vue.umd.js",
