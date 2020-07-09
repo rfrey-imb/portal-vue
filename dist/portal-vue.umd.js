@@ -1,8 +1,8 @@
 
  /*! 
-  * portal-vue © Thorsten Lünborg, 2019 
+  * portal-vue © Thorsten Lünborg, 2020 
   * 
-  * Version: 2.1.7
+  * Version: 2.2.0
   * 
   * LICENCE: MIT 
   * 
@@ -19,6 +19,8 @@
   Vue = Vue && Vue.hasOwnProperty('default') ? Vue['default'] : Vue;
 
   function _typeof(obj) {
+    "@babel/helpers - typeof";
+
     if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
       _typeof = function (obj) {
         return typeof obj;
@@ -33,23 +35,36 @@
   }
 
   function _toConsumableArray(arr) {
-    return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread();
+    return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
   }
 
   function _arrayWithoutHoles(arr) {
-    if (Array.isArray(arr)) {
-      for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
-
-      return arr2;
-    }
+    if (Array.isArray(arr)) return _arrayLikeToArray(arr);
   }
 
   function _iterableToArray(iter) {
-    if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
+    if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
+  }
+
+  function _unsupportedIterableToArray(o, minLen) {
+    if (!o) return;
+    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
+    var n = Object.prototype.toString.call(o).slice(8, -1);
+    if (n === "Object" && o.constructor) n = o.constructor.name;
+    if (n === "Map" || n === "Set") return Array.from(o);
+    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+  }
+
+  function _arrayLikeToArray(arr, len) {
+    if (len == null || len > arr.length) len = arr.length;
+
+    for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
+
+    return arr2;
   }
 
   function _nonIterableSpread() {
-    throw new TypeError("Invalid attempt to spread non-iterable instance");
+    throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
 
   var inBrowser = typeof window !== 'undefined';
@@ -96,7 +111,8 @@
         transports: transports,
         targets: targets,
         sources: sources,
-        trackInstances: inBrowser
+        trackInstances: inBrowser,
+        changeCallbacks: []
       };
     },
     methods: {
@@ -133,6 +149,7 @@
         this.transports[to] = stableSort(newTransports, function (a, b) {
           return a.order - b.order;
         });
+        this.$_processChange();
       },
       close: function close(transport) {
         var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
@@ -156,6 +173,8 @@
             this.transports[to] = newTransports;
           }
         }
+
+        this.$_processChange();
       },
       registerTarget: function registerTarget(target, vm, force) {
         if (!inBrowser) return;
@@ -165,21 +184,25 @@
         }
 
         this.$set(this.targets, target, Object.freeze([vm]));
+        this.$_processChange();
       },
       unregisterTarget: function unregisterTarget(target) {
         this.$delete(this.targets, target);
+        this.$_processChange();
       },
       registerSource: function registerSource(source, vm, force) {
         if (!inBrowser) return;
 
         if (this.trackInstances && !force && this.sources[source]) {
-          console.warn("[portal-vue]: source ".concat(source, " already exists"));
+          console.warn("[portal-vue]: Source ".concat(source, " already exists"));
         }
 
         this.$set(this.sources, source, Object.freeze([vm]));
+        this.$_processChange();
       },
       unregisterSource: function unregisterSource(source) {
         this.$delete(this.sources, source);
+        this.$_processChange();
       },
       hasTarget: function hasTarget(to) {
         return !!(this.targets[to] && this.targets[to][0]);
@@ -190,7 +213,23 @@
       hasContentFor: function hasContentFor(to) {
         return !!this.transports[to] && !!this.transports[to].length;
       },
+      addOnChangeListener: function addOnChangeListener(callback) {
+        this.changeCallbacks.push(callback);
+      },
+      removeOnChangeListener: function removeOnChangeListener(callback) {
+        this.changeCallbacks = this.changeCallbacks.filter(function (c) {
+          return c !== callback;
+        });
+      },
+      removeOnChangeListeners: function removeOnChangeListeners() {
+        this.changeCallbacks = [];
+      },
       // Internal
+      $_processChange: function $_processChange() {
+        this.changeCallbacks.forEach(function (callback) {
+          callback();
+        });
+      },
       $_getTransportIndex: function $_getTransportIndex(_ref) {
         var to = _ref.to,
             from = _ref.from;

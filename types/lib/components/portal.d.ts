@@ -1,11 +1,11 @@
 import Vue from 'vue';
 import { VNode } from 'vue';
-declare const _default: import("vue").VueConstructor<{
+declare const _default: import("vue/types/vue").ExtendedVue<Vue, unknown, {
     clear(target?: string | undefined): void;
-    normalizeSlots(): VNode[] | Function[] | undefined;
-    normalizeOwnChildren(children: Function | VNode[]): VNode[];
+    normalizeSlots(): Function[] | VNode[] | undefined;
+    normalizeOwnChildren(children: VNode[] | Function): VNode[];
     sendUpdate(): void;
-} & {
+}, unknown, {
     disabled: boolean;
     name: string;
     order: number;
@@ -13,5 +13,5 @@ declare const _default: import("vue").VueConstructor<{
     slotProps: any;
     tag: string;
     to: string;
-} & Vue>;
+}>;
 export default _default;
