@@ -2,5 +2,10 @@
   "editor.formatOnSave": true,
   "eslint.autoFixOnSave": true,
 
-  "markdownlint.ignore": ["docs/**"]
+  "markdownlint.ignore": [
+    "docs/**"
+  ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  }
 }
